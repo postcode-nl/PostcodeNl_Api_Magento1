@@ -3,7 +3,7 @@
     <modules>
         <Mage42_PostcodeNL>
             <active>true</active>
-            <codePool>local</codePool>
+            <codePool>community</codePool>
         </Mage42_PostcodeNL>
     </modules>
 </config>
