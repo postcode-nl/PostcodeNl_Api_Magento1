@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+    <checkout_onepage_index>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </checkout_onepage_index>
+    <customer_address_form>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </customer_address_form>
+    <checkout_multishipping_register>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </checkout_multishipping_register>
+    <checkout_multishipping_address_newshipping>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </checkout_multishipping_address_newshipping>
+    <checkout_multishipping_address_editshipping>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </checkout_multishipping_address_editshipping>
+    <checkout_multishipping_address_editbilling>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </checkout_multishipping_address_editbilling>
+    <onestepcheckout_index_index>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </onestepcheckout_index_index>
+    <onestepquickcheckout_index_index>
+        <reference name="head">
+            <action method="addCss" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/css/lookup.css</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <params><![CDATA[data-group="js001"]]></params>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="mage42_postcodenl/jsinit" name="mage42.postcodenl.jsinit" template="mage42/postcodenl/jsinit.phtml" />
+        </reference>
+    </onestepquickcheckout_index_index>
+</layout>
