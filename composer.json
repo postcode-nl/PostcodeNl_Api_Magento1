@@ -1,0 +1,16 @@
+{
+    "name": "mage42/postcode_nl",
+    "description": "PostcodeNL integration with Magento 1",
+    "type": "magento-module",
+    "require": {
+        "magento-hackathon/magento-composer-installer": "*"
+    },
+    "license": "BSD-2-Clause",
+    "authors": [
+        {
+            "name": "Matthias",
+            "email": "matthias@3webapps.com"
+        }
+    ],
+    "minimum-stability": "alpha"
+}

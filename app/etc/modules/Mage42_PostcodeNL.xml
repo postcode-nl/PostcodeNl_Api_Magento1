@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Mage42_PostcodeNL>
+            <active>true</active>
+            <codePool>local</codePool>
+        </Mage42_PostcodeNL>
+    </modules>
+</config>

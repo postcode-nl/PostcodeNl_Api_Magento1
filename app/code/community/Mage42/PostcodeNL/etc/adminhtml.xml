@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <acl>
+        <all>
+            <title>Allow Everything</title>
+        </all>
+        <resources>
+            <admin>
+                <children>
+                    <system>
+                        <children>
+                            <config>
+                                <children>
+                                    <mage42_postcodenl module="mage42_postcodenl">
+                                        <title>Postcode.nl API</title>
+                                    </mage42_postcodenl>
+                                </children>
+                            </config>
+                        </children>
+                    </system>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+</config>
