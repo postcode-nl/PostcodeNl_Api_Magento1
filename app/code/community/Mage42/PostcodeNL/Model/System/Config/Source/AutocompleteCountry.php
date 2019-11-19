@@ -8,13 +8,13 @@ class Mage42_PostcodeNL_Model_System_Config_Source_AutocompleteCountry extends M
     {
         $result = array();
         if (!$this->_options) {
-            $this->_options = Mage::helper('mage42_postcodenl')->lookupAccountCountries();
+            $jsonData = Mage::helper('mage42_postcodenl')->_internationalGetSupportedCountries();
+            if (sizeof($jsonData) > 0)
+                $this->_options['countries'] = $jsonData;
         }
-
         for ($i = 0; $i < sizeof($this->_options['countries']); $i++) {
-            array_push($result, array('value' => $this->_options['countries'][$i], 'label' => $this->_options['countries'][$i]));
+            array_push($result, array('value' => $this->_options['countries'][$i]['iso2'] . '-' . $this->_options['countries'][$i]['iso3'], 'label' => $this->_options['countries'][$i]['name']));
         }
-        $options = $this->_options;
         return $result;
     }
 }

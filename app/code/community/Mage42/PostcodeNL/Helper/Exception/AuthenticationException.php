@@ -1,0 +1,6 @@
+<?php
+
+class Mage42_PostcodeNL_Helper_Exception_AuthenticationException extends Mage42_PostcodeNL_Helper_Exception_ClientException
+{
+
+}

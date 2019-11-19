@@ -1,10 +1,13 @@
 <?php
 class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 {
+    const SESSION_HEADER_KEY = 'X-Autocomplete-Session';
     const API_TIMEOUT = 3;
-    const API_URL = 'https://api.postcode.nl';
-    const ACCOUNT_URL = 'https://api.postcode.eu';
+    const ACCOUNT_URL = 'https://api.postcode.nl';
     const API_VERSION = 'v1';
+
+    protected $_curlHandler;
+    protected $_mostRecentResponseHeaders = [];
 
     protected $_modules = null;
 
@@ -16,12 +19,36 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     protected $_httpClientError = null;
     protected $_debuggingOverride = false;
 
+    public function __construct()
+    {
+        if (!extension_loaded('curl'))
+            throw new Mage42_PostcodeNL_Helper_Exception_CurlNotLoadedException('Cannot use Postcode.nl International Autocomplete client, the server needs to have the PHP `cURL` extension installed.');
+
+        $this->_curlHandler = curl_init();
+        curl_setopt($this->_curlHandler, CURLOPT_CUSTOMREQUEST, 'GET');
+        curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, self::API_TIMEOUT);
+        curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, self::API_TIMEOUT);
+        curl_setopt($this->_curlHandler, CURLOPT_USERAGENT, static::class . '/' . static::API_VERSION . ' PHP/' . PHP_VERSION);
+
+        if (isset($_SERVER['HTTP_REFERER']))
+            curl_setopt($this->_curlHandler, CURLOPT_REFERER, $_SERVER['HTTP_REFERER']);
+
+        curl_setopt($this->_curlHandler, CURLOPT_HEADERFUNCTION, function($curl, $header) {
+            $length = strlen($header);
+            $headerParts = explode(':', $header, 2);
+            if (count($headerParts) < 2)
+                return $length;
+            $headerName = $headerParts[0];
+            $headerValue = $headerParts[1];
+            $this->_mostRecentResponseHeaders[strtolower(trim($headerName))][] = trim($headerValue);
+            return $length;
+        });
+
+    }
 
     /**
-     * Get the html for initializing validation script.
-     *
      * @param bool $getAdminConfig
-     *
      * @return string
      */
     public function getJsinit($getAdminConfig = false)
@@ -34,7 +61,7 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
         $html = '
 			<script type="text/javascript">
 			//<![CDATA[
-				var PCNLAPI_CONFIG = {
+				var MAGE42PCNL_CONFIG = {
 					baseUrl: "' . htmlspecialchars($baseUrl) . '",
 					autocompleteCountries: '. $this->_getAllowedCountries() .',
 					useStreet2AsHouseNumber: ' . $this->_getConfigBoolString('mage42_postcodenl/advanced_config/use_street2_as_housenumber') . ',
@@ -53,8 +80,9 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 						houseNumberTitle: "' . htmlspecialchars($this->__('Housenumber')) . '",
 						houseNumberAdditionLabel: "' . htmlspecialchars($this->__('Housenumber addition')) . '",
 						houseNumberAdditionTitle: "' . htmlspecialchars($this->__('Housenumber addition')) . '",
-						streetNameLabel: "' . htmlspecialchars($this->__('Street')) . '",
-						streetNameTitle: "' . htmlspecialchars($this->__('Street')) . '",
+						streetNameLabel: "' . htmlspecialchars($this->__('Address')) . '",
+						streetNameTitle: "' . htmlspecialchars($this->__('Address')) . '",
+						streetNamePlaceholder: "' . htmlspecialchars($this->__('City, street or postcode')) . '",
 						selectAddition: "' . htmlspecialchars($this->__('Select...')) . '",
 						noAdditionSelect: "' . htmlspecialchars($this->__('No addition.')) . '",
 						noAdditionSelectCustom: "' . htmlspecialchars($this->__('`No addition`')) . '",
@@ -77,29 +105,6 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Check if we're currently in debug mode, and if the current user may see dev info.
-     *
-     * @return bool
-     */
-    public function isDebugging()
-    {
-        if ($this->_debuggingOverride)
-            return true;
-
-        return (bool)$this->_getStoreConfig('mage42_postcodenl/development_config/api_debug') && Mage::helper('core')->isDevAllowed();
-    }
-
-    /**
-     * Set the debugging override flag.
-     *
-     * @param bool $toggle
-     */
-    protected function _setDebuggingOverride($toggle)
-    {
-        $this->_debuggingOverride = $toggle;
-    }
-
-    /**
      * @return array|string
      */
     public function lookupAccountUser()
@@ -119,475 +124,193 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * @return array|string
+     * @param $context
+     * @param $term
+     * @param $session
+     * @return mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
+     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
+     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
+     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
+     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
+     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     *
+     * @see https://api.postcode.nl/documentation/international/v1/Autocomplete/autocomplete
      */
-    public function lookupAccountAccess()
+    public function _internationalAutocomplete($context, $term, $session = null)
     {
-        $response = array();
-        try {
-            $url = $this->_getAccountUrl() . '/account/v1/info';
-            $jsonData = $this->_callApiUrlGet($url);
-            if (isset($jsonData['hasAccess'])) {
-               return $jsonData['hasAccess'] == 1 ? "<h4 style='color: green'>valid</h4>" : "<h4 style='color: red'>invalid</h4>";
-            } else {
-                return "<h4 style='color: red'>invalid</h4>";
-            }
-        } catch (Exception $e) {
-            return array_merge($response, $this->_errorResponse());
-        }
+        return $this->_performApiCall('international/v1/autocomplete/' . rawurlencode($context) . '/' . rawurlencode($term), $session ? $session : $this->generateSessionString());
     }
 
     /**
-     * @return array
+     * @param $context
+     * @param $session
+     * @return mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
+     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
+     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
+     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
+     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
+     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     *
+     * @see https://api.postcode.nl/documentation/international/v1/Autocomplete/getDetails
      */
-    public function lookupAccountCountries()
+    public function _internationalGetDetails($context, $session = null)
     {
-        $response = array();
-        try {
-            $url = $this->_getAccountUrl() . '/account/v1/info';
-            $jsonData = $this->_callApiUrlGet($url);
-            if (isset($jsonData['countries'])) {
-                $response['countries'] = $jsonData['countries'];
-                return $response;
-            }
-
-        } catch (Exception $e) {
-            return array_merge($response, $this->_errorResponse());
-        }
+        return $this->_performApiCall('international/v1/address/' . rawurlencode($context), $session ? $session : $this->generateSessionString());
     }
 
     /**
-     * Lookup information about a Dutch address by countryId, postcode, house number, and house number addition
+     * @return mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
+     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
+     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
+     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
+     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
+     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
      *
-     * @param string $countryId
-     * @param string $postcode
-     * @param string $houseNumber
-     * @param string $houseNumberAddition
-     *
-     * @return array
+     * @see https://api.postcode.nl/documentation/international/v1/Autocomplete/getSupportedCountries
      */
-    public function lookupAddress($countryId, $postcode, $houseNumber, $houseNumberAddition)
+    public function _internationalGetSupportedCountries()
     {
-        // Check if we are we enabled, configured & capable of handling an API request
-        $message = $this->_checkApiReady();
-        if ($message)
-            return $message;
+        return $this->_performApiCall('international/v1/supported-countries', null);
+    }
 
-        // Some basic user data 'fixing', remove any not-letter, not-number characters
-        $postcode = preg_replace('~[^a-z0-9]~i', '', $postcode);
+    /**
+     * @param $postcode
+     * @param $houseNumber
+     * @param $houseNumberAddition
+     * @return mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
+     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
+     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
+     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
+     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidPostcodeException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
+     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
+     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     *
+     * @see https://api.postcode.nl/documentation
+     */
+    public function _dutchAddressByPostcode($postcode, $houseNumber, $houseNumberAddition)
+    {
+        $postcode = trim($postcode);
+        if (!$this->_isValidDutchPostcodeFormat($postcode))
+            throw new Mage42_PostcodeNL_Helper_Exception_InvalidPostcodeException(sprintf('Postcode `%s` has an invalid format, it should be in the format 1234AB.', $postcode));
+        $urlParts = [
+            'nl/v1/addresses/postcode',
+            rawurlencode($postcode),
+            $houseNumber,
+        ];
+        if ($houseNumberAddition !== null)
+            $urlParts[] = rawurlencode($houseNumberAddition);
+        return $this->_performApiCall(implode('/', $urlParts), null);
+    }
 
-        switch($countryId) {
-            case "NL":
-                // Basic postcode format checking
-                if (!preg_match('~^[1-9][0-9]{3}[a-z]{2}$~i', $postcode)) {
-                    $response['message'] = $this->__('Invalid postcode format, use `1234AB` format.');
-                    $response['messageTarget'] = 'postcode';
-                    return $response;
-                }
-                break;
-            case "BE":
-                if (!preg_match('~^(?:(?:[1-9])(?:\d{3}))$~i', $postcode)) {
-                    $response['message'] = $this->__('Invalid postcode format, use `1234` format.');
-                    $response['messageTarget'] = 'postcode';
-                    return $response;
-                }
-                break;
+    /**
+     * @return mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
+     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
+     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
+     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
+     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
+     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     */
+    public function _accountInfo()
+    {
+        return $this->_performApiCall('account/v1/info', null);
+    }
+
+    protected function _getApiCallResponseHeaders()
+    {
+        return $this->_mostRecentResponseHeaders;
+    }
+
+    protected function _isValidDutchPostcodeFormat($postcode)
+    {
+        return (bool) preg_match('~^[1-9]\d{3}\s?[a-zA-Z]{2}$~', $postcode);
+    }
+
+    public function __destruct()
+    {
+        curl_close($this->_curlHandler);
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function generateSessionString()
+    {
+        $phpversion = (float) phpversion();
+        if ($phpversion === 0)
+            throw new Mage42_PostcodeNL_Helper_Exception_NotAValidPHPVersionException('Please check your PHP version');
+        if ($phpversion > 7.0)
+            return bin2hex(random_bytes(8));
+        else
+            return bin2hex(openssl_random_pseudo_bytes(8));
+    }
+
+    /**
+     * @param $path
+     * @param $session
+     * @return mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
+     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
+     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
+     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
+     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
+     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
+     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     */
+    protected function _performApiCall($path, $session)
+    {
+        $url = $this->_getServiceUrl() .'/' . $path;
+        curl_setopt($this->_curlHandler, CURLOPT_URL, $url);
+        curl_setopt($this->_curlHandler, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($this->_curlHandler, CURLOPT_USERPWD, $this->_getKey() . ':' . $this->_getSecret());
+        if ($session !== null)
+            curl_setopt($this->_curlHandler, CURLOPT_HTTPHEADER, [
+               static::SESSION_HEADER_KEY . ': ' . $session,
+            ]);
+
+        $this->_mostRecentResponseHeaders = [];
+        $response = curl_exec($this->_curlHandler);
+        $responseStatusCode = curl_getinfo($this->_curlHandler, CURLINFO_RESPONSE_CODE);
+        $curlError = curl_error($this->_curlHandler);
+        $curlErrorNr = curl_errno($this->_curlHandler);
+        if ($curlError !== '')
+            throw new Mage42_PostcodeNL_Helper_Exception_CurlException('Connection error number `%s`: `%s`.', [$curlErrorNr, $curlError]);
+        $jsonResponse = json_decode($response, true);
+        switch ($responseStatusCode)
+        {
+            case 200:
+                if (!is_array($jsonResponse))
+                    throw new Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException('Invalid JSON response from the server for request: ' . $url);
+                return $jsonResponse;
+            case 400:
+                throw new Mage42_PostcodeNL_Helper_Exception_BadRequestException(vsprintf('Server response code 400, bad request for `%s`.', [$url]));
+            case 401:
+                throw new Mage42_PostcodeNL_Helper_Exception_AuthenticationException('Could not authenticate your request, please make sure your API credentials are correct.');
+            case 403:
+                throw new Mage42_PostcodeNL_Helper_Exception_ForbiddenException('Your account currently has no access to the international API, make sure you have an active subscription.');
+            case 429:
+                throw new Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException('Too many requests made, please slow down: ' . $response);
+            case 503:
+                throw new Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException('The international API server is currently not available: ' . $response);
             default:
-                // Basic postcode format checking
-                if (!preg_match('~^[1-9][0-9]{3}[a-z]{2}$~i', $postcode)) {
-                    $response['message'] = $this->__('Invalid postcode format, use `1234AB` format.');
-                    $response['messageTarget'] = 'postcode';
-                    return $response;
-                }
-                break;
+                throw new Mage42_PostcodeNL_Helper_Exception_UnexpectedException(vsprintf('Unexpected server response code `%s`.', [$responseStatusCode]));
         }
-
-        return $this->_lookupAddress($countryId, $postcode, $houseNumber, $houseNumberAddition);
-    }
-
-    /**
-     * @param string $countryId
-     * @param string $postcode
-     * @param string $houseNumber
-     * @param string $houseNumberAddition
-     *
-     * @return array
-     */
-    public function _lookupAddress($countryId, $postcode, $houseNumber, $houseNumberAddition)
-    {
-        $response = array();
-
-        try {
-            //$url = $this->_getServiceUrl() . '/rest/addresses/' . rawurlencode($postcode). '/'. rawurlencode($houseNumber) . '/'. rawurlencode($houseNumberAddition);
-            $url = $this->_getServiceUrl() . '/' . rawurlencode(strtolower($countryId)) . '/' . rawurlencode(self::API_VERSION) . '/addresses/postcode/' . rawurlencode($postcode). '/'. rawurlencode($houseNumber) . '/'. rawurlencode($houseNumberAddition);
-            $jsonData = $this->_callApiUrlGet($url);
-            if ($this->_getStoreConfig('mage42_postcodenl/development_config/api_showcase'))
-                $response['showcaseResponse'] = $jsonData;
-
-            if ($this->isDebugging())
-                $response['debugInfo'] = $this->_getDebugInfo($url, $jsonData);
-
-            if ($this->_httpResponseCode == 200 && is_array($jsonData) && isset($jsonData['postcode'])) {
-                return array_merge($response, $jsonData);
-            }
-
-            if (isset($jsonData['exceptionId'])) {
-                if ($this->_httpResponseCode == 400 || $this->_httpResponseCode == 404) {
-                    switch ($jsonData['exceptionId'])
-                    {
-                        case 'PostcodeNl_Controller_Address_PostcodeTooShortException':
-                        case 'PostcodeNl_Controller_Address_PostcodeTooLongException':
-                        case 'PostcodeNl_Controller_Address_NoPostcodeSpecifiedException':
-                        case 'PostcodeNl_Controller_Address_InvalidPostcodeException':
-                            $response['message'] = $this->__('Invalid postcode format, use `1234AB` format.');
-                            $response['messageTarget'] = 'postcode';
-                            break;
-                        case 'PostcodeNl_Service_PostcodeAddress_AddressNotFoundException':
-                            $response['message'] = $this->__('Unknown postcode + housenumber combination.');
-                            $response['messageTarget'] = 'housenumber';
-                            break;
-                        case 'PostcodeNl_Controller_Address_InvalidHouseNumberException':
-                        case 'PostcodeNl_Controller_Address_NoHouseNumberSpecifiedException':
-                        case 'PostcodeNl_Controller_Address_NegativeHouseNumberException':
-                        case 'PostcodeNl_Controller_Address_HouseNumberTooLargeException':
-                        case 'PostcodeNl_Controller_Address_HouseNumberIsNotAnIntegerException':
-                            $response['message'] = $this->__('Housenumber format is not valid.');
-                            $response['messageTarget'] = 'housenumber';
-                            break;
-                        default:
-                            $response['message'] = $this->__('Incorrect address.');
-                            $response['messageTarget'] = 'housenumber';
-                            break;
-                    }
-
-                    return $response;
-                }
-            }
-
-            return array_merge($response, $this->_errorResponse());
-        } catch (Exception $e) {
-            return array_merge($response, $this->_errorResponse());
-        }
-    }
-
-    /**
-     * @param $countryId
-     * @param $postcode
-     * @return array|bool
-     */
-    public function autocompletePostal($countryId, $postcode)
-    {
-        $message = $this->_checkApiReady();
-        if ($message)
-            return $message;
-
-        $postcode = preg_replace('~[^a-z0-9]~i', '', $postcode);
-
-        return $this->_autocompletePostal($countryId, $postcode);
-    }
-
-    /**
-     * @param $countryId
-     * @param $postcode
-     * @return array
-     */
-    public function _autocompletePostal($countryId, $postcode)
-    {
-        $response = array();
-
-        try {
-            $url = $this->_getServiceUrl() . '/' . rawurlencode(strtolower($countryId)) . '/' . rawurlencode(self::API_VERSION) . '/autocomplete/postal-area/' . rawurlencode($postcode);
-            $jsonData = $this->_callApiUrlGet($url);
-            if ($this->_getStoreConfig('mage42_postcodenl/development_config/api_showcase'))
-                $response['showcaseResponse'] = $jsonData;
-
-            if ($this->isDebugging())
-                $response['debugInfo'] = $this->_getDebugInfo($url, $jsonData);
-
-            if ($this->_httpResponseCode == 200 && is_array($jsonData) && (isset($jsonData[0]['postcode']) || (isset($jsonData[0]['municipalityName']) || isset($jsonData[0]['cityName'])))) {
-                return array_merge($response, $jsonData);
-            }
-
-            if (isset($jsonData['exceptionId'])) {
-                if ($this->_httpResponseCode == 400 || $this->_httpResponseCode == 404) {
-                    switch ($jsonData['exceptionId'])
-                    {
-                        case 'PostcodeNl_Controller_Belgium_AutoComplete_PostalAreaTooShortException':
-                        case 'PostcodeNl_Controller_Germany_AutoComplete_PostalAreaTooShortException':
-                            $response['message'] = $this->__('The specified postal area parameter is too short..');
-                            $response['messageTarget'] = 'postcode';
-                            break;
-                        default:
-                            $response['message'] = $this->__('Incorrect address.');
-                            $response['messageTarget'] = 'housenumber';
-                            break;
-                    }
-
-                    return $response;
-                }
-            }
-
-            return array_merge($response, $this->_errorResponse());
-        } catch (Exception $e) {
-            return array_merge($response, $this->_errorResponse());
-        }
-    }
-
-    /**
-     * @param $countryId
-     * @param $cityId
-     * @param $postcode
-     * @param $streetName
-     * @return array|bool
-     */
-    public function autocompleteStreet($countryId, $cityId, $postcode, $streetName)
-    {
-        $message = $this->_checkApiReady();
-        if ($message)
-            return $message;
-
-        $postcode = preg_replace('~[^0-9]~i', '', $postcode);
-
-        return $this->_autocompleteStreet($countryId, $cityId, $postcode, $streetName);
-    }
-
-    /**
-     * @param $countryId
-     * @param $cityId
-     * @param $postcode
-     * @param $streetName
-     * @return array
-     */
-    public function _autocompleteStreet($countryId, $cityId, $postcode, $streetName)
-    {
-        $response = array();
-
-        try {
-            $url = $this->_getServiceUrl() . '/' . rawurlencode(strtolower($countryId)) . '/' . rawurlencode(self::API_VERSION) . '/autocomplete/street/' . rawurlencode($cityId) . '/' . rawurlencode($postcode) . '/' . rawurlencode($streetName);
-            $jsonData = $this->_callApiUrlGet($url);
-            if ($this->_getStoreConfig('mage42_postcodenl/development_config/api_showcase'))
-                $response['showcaseResponse'] = $jsonData;
-
-            if ($this->isDebugging())
-                $response['debugInfo'] = $this->_getDebugInfo($url, $jsonData);
-
-            if ($this->_httpResponseCode == 200 && is_array($jsonData) && (isset($jsonData[0]['postcode']) || (isset($jsonData[0]['municipalityName']) || isset($jsonData[0]['cityName'])))) {
-                return array_merge($response, $jsonData);
-            }
-
-            if (isset($jsonData['exceptionId'])) {
-                if ($this->_httpResponseCode == 400 || $this->_httpResponseCode == 404) {
-                    switch ($jsonData['exceptionId'])
-                    {
-                        case 'PostcodeNl_Controller_Belgium_AutoComplete_PostalAreaTooShortException':
-                        case 'PostcodeNl_Controller_Germany_AutoComplete_PostalAreaTooShortException':
-                            $response['message'] = $this->__('The specified postal area parameter is too short..');
-                            $response['messageTarget'] = 'postcode';
-                            break;
-                        default:
-                            $response['message'] = $this->__('Incorrect address.');
-                            $response['messageTarget'] = 'housenumber';
-                            break;
-                    }
-
-                    return $response;
-                }
-            }
-
-            return array_merge($response, $this->_errorResponse());
-        } catch (Exception $e) {
-            return array_merge($response, $this->_errorResponse());
-        }
-    }
-
-    /**
-     * @param $countryId
-     * @param $cityId
-     * @param $streetId
-     * @param $postcode
-     * @param $validation
-     * @param $houseNumber
-     * @param string $language
-     * @return array|bool
-     */
-    public function autocompleteHouseNumber($countryId, $cityId, $streetId, $postcode, $validation, $houseNumber, $language = '')
-    {
-        $message = $this->_checkApiReady();
-        if ($message)
-            return $message;
-
-        $postcode = preg_replace('~[^0-9]~i', '', $postcode);
-
-        return $this->_autocompleteHouseNumber($countryId, $cityId, $streetId, $postcode, $validation, $houseNumber, $language);
-    }
-
-    /**
-     * @param $countryId
-     * @param $cityId
-     * @param $streetId
-     * @param $postcode
-     * @param $validation
-     * @param $houseNumber
-     * @param $language
-     * @return array
-     */
-    public function _autocompleteHouseNumber($countryId, $cityId, $streetId, $postcode, $validation, $houseNumber, $language)
-    {
-        $response = array();
-
-        try {
-            $url = (strtolower($countryId) == 'be')
-                ? $this->_getServiceUrl() . '/' . rawurlencode(strtolower($countryId)) . '/' . rawurlencode(self::API_VERSION) . '/autocomplete/house-number/' . rawurlencode($cityId) . '/' . rawurlencode($streetId) . '/' . rawurlencode($postcode) . '/' . rawurlencode($language) . '/' . rawurlencode($validation) . '/' . rawurlencode($houseNumber)
-                : $this->_getServiceUrl() . '/' . rawurlencode(strtolower($countryId)) . '/' . rawurlencode(self::API_VERSION) . '/autocomplete/house-number/' . rawurlencode($cityId) . '/' . rawurlencode($streetId) . '/' . rawurlencode($postcode) . '/' . rawurlencode($validation) . '/' . rawurlencode($houseNumber);
-            $jsonData = $this->_callApiUrlGet($url);
-            if ($this->_getStoreConfig('mage42_postcodenl/development_config/api_showcase'))
-                $response['showcaseResponse'] = $jsonData;
-            if ($this->isDebugging())
-                $response['debugInfo'] = $this->_getDebugInfo($url, $jsonData);
-            if ($this->_httpResponseCode == 200 && is_array($jsonData) && isset($jsonData[0]['postcode']))
-                return array_merge($response, $jsonData);
-            if (isset($jsonData['exceptionId'])) {
-                if ($this->_httpResponseCode == 400 || $this->_httpResponseCode == 404) {
-                    switch ($jsonData['exceptionId'])
-                    {
-                        case 'PostcodeNl_Controller_Belgium_AutoComplete_PostalAreaTooShortException':
-                        case 'PostcodeNl_Controller_Germany_AutoComplete_PostalAreaTooShortException':
-                            $response['message'] = $this->__('The specified postal area parameter is too short..');
-                            $response['messageTarget'] = 'postcode';
-                            break;
-                        default:
-                            $response['message'] = $this->__('Incorrect address.');
-                            $response['messageTarget'] = 'housenumber';
-                            break;
-                    }
-
-                    return $response;
-                }
-            }
-            return array_merge($response, $this->_errorResponse());
-        } catch (Exception $e) {
-            return array_merge($response, $this->_errorResponse());
-        }
-    }
-
-    /**
-     * Set the enrichType number, or text/class description if not in known enrichType list
-     *
-     * @param mixed $enrichType
-     */
-    public function setEnrichType($enrichType)
-    {
-        $this->_enrichType = preg_replace('~[^0-9a-z\-_,]~i', '', $enrichType);
-        if (strlen($this->_enrichType) > 40)
-            $this->_enrichType = substr($this->_enrichType, 0, 40);
-    }
-
-    /**
-     * @param $url
-     * @param $jsonData
-     * @return array
-     */
-    protected function _getDebugInfo($url, $jsonData)
-    {
-        return array(
-            'requestUrl' => $url,
-            'rawResponse' => $this->_httpResponseRaw,
-            'responseCode' => $this->_httpResponseCode,
-            'responseCodeClass' => $this->_httpResponseCodeClass,
-            'parsedResponse' => $jsonData,
-            'httpClientError' => $this->_httpClientError,
-            'configuration' => array(
-                'url' => $this->_getServiceUrl(),
-                'key' => $this->_getKey(),
-                'secret' => substr($this->_getSecret(), 0, 6) .'[hidden]',
-                'showcase' => $this->_getStoreConfig('mage42_postcodenl/development_config/api_showcase'),
-                'debug' => $this->_getStoreConfig('mage42_postcodenl/development_config/api_debug'),
-            ),
-            'magentoVersion' => $this->_getMagentoVersion(),
-            'extensionVersion' => $this->_getExtensionVersion(),
-            'modules' => $this->_getMagentoModules(),
-        );
-    }
-
-    /**
-     * @return array
-     */
-    public function testConnection()
-    {
-        // Default is not OK
-        $status = 'error';
-        $info = array();
-
-        // Do a test address lookup
-        $this->_setDebuggingOverride(true);
-        $addressData = $this->lookupAddress('2012ES', '30', '');
-        $this->_setDebuggingOverride(false);
-
-        if (!isset($addressData['debugInfo']) && isset($addressData['message'])) {
-            // Client-side error
-            $message = $addressData['message'];
-            if (isset($addressData['info']))
-                $info = $addressData['info'];
-        } else if ($addressData['debugInfo']['httpClientError']) {
-            // We have a HTTP connection error
-            $message = $this->__('Your server could not connect to the Postcode.nl server.');
-
-            // Do some common SSL CA problem detection
-            if (strpos($addressData['debugInfo']['httpClientError'], 'SSL certificate problem, verify that the CA cert is OK') !== false) {
-                $info[] = $this->__('Your servers\' \'cURL SSL CA bundle\' is missing or outdated. Further information:');
-                $info[] = '- <a href="https://stackoverflow.com/questions/6400300/https-and-ssl3-get-server-certificatecertificate-verify-failed-ca-is-ok" target="_blank">'. $this->__('How to update/fix your CA cert bundle') .'</a>';
-                $info[] = '- <a href="https://curl.haxx.se/docs/sslcerts.html" target="_blank">'. $this->__('About cURL SSL CA certificates') .'</a>';
-                $info[] = '';
-            } else if (strpos($addressData['debugInfo']['httpClientError'], 'unable to get local issuer certificate') !== false) {
-                $info[] = $this->__('cURL cannot read/access the CA cert file:');
-                $info[] = '- <a href="https://curl.haxx.se/docs/sslcerts.html" target="_blank">'. $this->__('About cURL SSL CA certificates') .'</a>';
-                $info[] = '';
-            } else {
-                $info[] = $this->__('Connection error.');
-            }
-
-            $info[] = $this->__('Error message:') . ' "'. $addressData['debugInfo']['httpClientError'] .'"';
-            $info[] = '- <a href="https://www.google.com/search?q='. urlencode($addressData['debugInfo']['httpClientError'])  .'" target="_blank">'. $this->__('Google the error message') .'</a>';
-            $info[] = '- '. $this->__('Contact your hosting provider if problems persist.');
-        } else if (!is_array($addressData['debugInfo']['parsedResponse'])) {
-            // We have not received a valid JSON response
-
-            $message = $this->__('The response from the Postcode.nl service could not be understood.');
-            $info[] = '- '. $this->__('The service might be temporarily unavailable, if problems persist, please contact <a href=\'mailto:info@postcode.nl\'>info@postcode.nl</a>.');
-            $info[] = '- '. $this->__('Technical reason: No valid JSON was returned by the request.');
-        } else if (is_array($addressData['debugInfo']['parsedResponse']) && isset($addressData['debugInfo']['parsedResponse']['exceptionId'])) {
-            // We have an exception message from the service itself
-
-            if ($addressData['debugInfo']['responseCode'] == 401) {
-                if ($addressData['debugInfo']['parsedResponse']['exceptionId'] == 'PostcodeNl_Controller_Plugin_HttpBasicAuthentication_NotAuthorizedException')
-                    $message = $this->__('`API Key` specified is incorrect.');
-                else if ($addressData['debugInfo']['parsedResponse']['exceptionId'] == 'PostcodeNl_Controller_Plugin_HttpBasicAuthentication_PasswordNotCorrectException')
-                    $message = $this->__('`API Secret` specified is incorrect.');
-                else
-                    $message = $this->__('Authentication is incorrect.');
-            } else if ($addressData['debugInfo']['responseCode'] == 403) {
-                $message = $this->__('Access is denied.');
-            } else {
-                $message = $this->__('Service reported an error.');
-            }
-
-            $info[] = $this->__('Postcode.nl service message:') .' "'. $addressData['debugInfo']['parsedResponse']['exception'] .'"';
-        } else if (is_array($addressData['debugInfo']['parsedResponse']) && !isset($addressData['debugInfo']['parsedResponse']['postcode'])) {
-            // This message is thrown when the JSON returned did not contain the data expected.
-
-            $message = $this->__('The response from the Postcode.nl service could not be understood.');
-            $info[] = '- '. $this->__('The service might be temporarily unavailable, if problems persist, please contact <a href=\'mailto:info@postcode.nl\'>info@postcode.nl</a>.');
-            $info[] = '- '. $this->__('Technical reason: Received JSON data did not contain expected data.');
-        } else {
-            $message = $this->__('A test connection to the API was successfully completed.');
-            $status = 'success';
-        }
-
-        return array(
-            'message' => $message,
-            'status' => $status,
-            'info' => $info,
-        );
     }
 
     /**
@@ -647,6 +370,29 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
+     * Check if we're currently in debug mode, and if the current user may see dev info.
+     *
+     * @return bool
+     */
+    public function isDebugging()
+    {
+        if ($this->_debuggingOverride)
+            return true;
+
+        return (bool)$this->_getStoreConfig('mage42_postcodenl/development_config/api_debug') && Mage::helper('core')->isDevAllowed();
+    }
+
+    /**
+     * Set the debugging override flag.
+     *
+     * @param bool $toggle
+     */
+    protected function _setDebuggingOverride($toggle)
+    {
+        $this->_debuggingOverride = $toggle;
+    }
+
+    /**
      * @return string
      */
     protected function _getMagentoVersion()
@@ -698,115 +444,5 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
             return Mage::helper('adminhtml')->getUrl('*/pcnl/lookup', array('_secure' => true));
 
         return Mage::getUrl('mage42_postcodenl/json', array('_secure' => true));
-    }
-
-    /**
-     * @return int
-     */
-    protected function _curlHasSsl()
-    {
-        $curlVersion = curl_version();
-        return $curlVersion['features'] & CURL_VERSION_SSL;
-    }
-
-    /**
-     * @return array|bool
-     */
-    protected function _checkApiReady()
-    {
-        if (!$this->_debuggingOverride && !($this->_getStoreConfig('mage42_postcodenl/config/enabled') || $this->_getStoreConfig('mage42_postcodenl/advanced_config/admin_validation_enabled')))
-            return array('message' => $this->__('Postcode.nl API not enabled.'));
-
-        if ($this->_getServiceUrl() === '' || $this->_getKey() === '' || $this->_getSecret() === '')
-            return array('message' => $this->__('Postcode.nl API not configured.'), 'info' => array($this->__('Configure your `API key` and `API secret`.')));
-
-        return $this->_checkCapabilities();
-    }
-
-    /**
-     * @return array|bool
-     */
-    protected function _checkCapabilities()
-    {
-        // Check for SSL support in CURL
-        if (!$this->_curlHasSsl())
-            return array('message' => $this->__('Cannot connect to Postcode.nl API: Server is missing SSL (https) support for CURL.'));
-
-        return false;
-    }
-
-    /**
-     * @param $url
-     * @return mixed
-     */
-    protected function _callApiUrlGet($url)
-    {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::API_TIMEOUT);
-        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($ch, CURLOPT_USERPWD, $this->_getKey() .':'. $this->_getSecret());
-        curl_setopt($ch, CURLOPT_USERAGENT, $this->_getUserAgent());
-
-        $this->_httpResponseRaw = curl_exec($ch);
-        $this->_httpResponseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $this->_httpResponseCodeClass = (int)floor($this->_httpResponseCode / 100) * 100;
-        $this->_httpClientError = curl_errno($ch) ? sprintf('cURL error %s: %s', curl_errno($ch), curl_error($ch)) : null;
-
-        curl_close($ch);
-
-        return json_decode($this->_httpResponseRaw, true);
-    }
-
-    /**
-     * @return string
-     */
-    protected function _getExtensionVersion()
-    {
-        $extensionInfo = $this->_getModuleInfo('mage42_postcodenl');
-        return $extensionInfo ? (string)$extensionInfo['version'] : 'unknown';
-    }
-
-    /**
-     * @return string
-     */
-    protected function _getUserAgent()
-    {
-        return 'mage42_postcodenl_MagentoPlugin/' . $this->_getExtensionVersion() .' '. $this->_getMagentoVersion() .' PHP/'. phpversion() .' EnrichType/'. $this->_enrichType;
-    }
-
-    /**
-     * @return array|null
-     */
-    protected function _getMagentoModules()
-    {
-        if ($this->_modules !== null)
-            return $this->_modules;
-
-        $this->_modules = array();
-        foreach (Mage::getConfig()->getNode('modules')->children() as $name => $module) {
-            $this->_modules[$name] = array();
-            foreach ($module as $key => $value) {
-                if (in_array((string)$key, array('active')))
-                    $this->_modules[$name][$key] = (string)$value == 'true' ? true : false;
-                else if (in_array((string)$key, array('codePool', 'version')))
-                    $this->_modules[$name][$key] = (string)$value;
-            }
-        }
-
-        return $this->_modules;
-    }
-
-    /**
-     * @return array
-     */
-    protected function _errorResponse()
-    {
-        return array(
-            'message' => $this->__('Validation error, please use manual input.'),
-            'messageTarget' => 'housenumber',
-            'useManual' => true,
-        );
     }
 }

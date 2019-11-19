@@ -1,143 +1,99 @@
-/* Frontend styles */
-
-input.pcnl-readonly {
-    background-color: #EEE;
-}
-
-.form-list input.pcnl-input-text-half {
-    width: 45%;
-    margin-right:5px;
-}
-.form-list select.pcnl-input-text-half {
-    width: 45%;
-}
-
-input.pcnl-readonly,
-select.pcnl-readonly {
-    color: grey;
-    font-style: italic;
-}
-
-.pcnl-info-text {
-    font-size: 90%;
-}
-
-.pcnl-info-label {
-    float: none !important;
-}
-
-.pcnl-address-text {
-    font-style: italic;
-    clear: both;
-    padding-left: 4px;
-    padding-right: 4px;
-    width: 90%;
-}
-
-.pcnl-hidden-field {
-    visibility: hidden;
-    display: block;
-    height: 0px !important;
-    width: 0px !important;
-    margin: 0 !important;
-    padding: 0 !important;
+.postcodenl-autocomplete-menu {
+    display: none;
     position: absolute;
-}
-
-/* Magento 1.9 styling 'float fix' for manual checkbox */
-.form-list .control.pcnl-manual-checkbox div.input-box {
-    display: block;
-    float: none;
-}
-
-/* Showcase styles */
-h4.pcnl-showcase, h4.pcnl-debug {
-    background: url(../images/postcodenl-logo.svg) left center no-repeat;
-    padding-left: 146px;
-    height: 22px;
-    line-height: 25px;
-    margin-bottom: 0px;
-}
-
-dl.pcnl-showcase, dl.pcnl-debug {
-    padding: 4px;
-    border: 1px solid grey;
-    border-radius: 4px;
-    -moz-border-radius: 4px;
-    background: white;
-    position: relative;
-}
-
-dl.pcnl-showcase dt, dl.pcnl-debug dt {
-    font-weight: bold;
-}
-dl.pcnl-showcase dd, dl.pcnl-debug dd {
-    margin-left: 20px;
-}
-
-/* OneStepCheckout(.com) styling */
-div.checkoutcontainer div.pcnl-input-housenumber {
-    width: 60%;
-}
-div.checkoutcontainer div.pcnl-input-housenumber .input-text {
-    width: 74%;
-}
-div.checkoutcontainer .pcnl-with-addition div.pcnl-input-housenumber .input-text {
-    width: 22%;
-}
-div.checkoutcontainer div.pcnl-input-housenumber select.pcnl-input-text-half {
-    margin-left: 4px;
-    width: 50%;
-}
-div.checkoutcontainer .pcnl-info-text {
-    width: 85%;
-}
-
-.onestepcheckout-index-index  .group-select li .input-postcode .input-box {
-    width: auto;
-}
-
-/* jQuery autocomplete */
-.ui-helper-hidden-accessible {
-    border: 0;
-    clip: rect(0 0 0 0);
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    padding: 0;
-    position: absolute;
-    width: 1px;
-}
-
-.ui-widget {
+    z-index: 99;
+    padding-bottom: 35px;
+    background-position: right 17px bottom 6px;
+    border-top: 1px solid #ddd;
     box-shadow: 0 10px 15px rgba(0, 0, 0, .15);
-}
-
-.ui-widget-content {
     background-color: #fff;
 }
 
-.ui-state-active {
-    background-color: #f0f6fa;
+.postcodenl-autocomplete-menu-open {
+    display: block;
 }
 
-.ui-menu {
+.postcodenl-autocomplete-menu-items {
+    max-height: 300px;
+    margin: 0;
     padding: 0;
-    z-index: 99;
+    border-bottom: 1px solid #ddd;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
-.ui-menu-item {
+.postcodenl-autocomplete-menu-items:empty {
+    display: none;
+}
+
+.postcodenl-autocomplete-menu,
+.postcodenl-autocomplete-address-input-blank {
+    background-image: url(../images/postcode-nl-logo-grey.svg);
+    background-repeat: no-repeat;
+    background-size: 100px;
+}
+
+.postcodenl-autocomplete-address-input-blank {
+    background-position: calc(100% - 12px) calc(50% + 2px);
+}
+
+.postcodenl-autocomplete-address-input-blank:focus {
+    background-position: calc(100% + 120px) calc(50% + 2px);
+    transition: background-position .3s ease-out;
+}
+
+.postcodenl-autocomplete-loading {
+    background-image: url(../images/loader-grey-small.gif);
+    background-position: center right 12px;
+    background-repeat: no-repeat;
+}
+
+.postcodenl-autocomplete-item {
+    padding: 8px 24px 8px 12px;
+    line-height: 1.1;
     cursor: pointer;
 }
 
-.ui-menu-item-wrapper {
-    padding: 8px 12px;
-    line-height: 1;
+.postcodenl-autocomplete-item-focus {
+    background-color: #f0f0f0;
 }
 
-.ui-autocomplete {
+.postcodenl-autocomplete-item mark {
+    background-color: transparent;
+    font-weight: 700;
+}
+
+.postcodenl-autocomplete-item-label {
+    display: inline-block;
+    max-width: 100%;
+    margin-right: 8px;
+}
+
+.postcodenl-autocomplete-item-description,
+.postcodenl-autocomplete-item-tag {
+    margin-right: 8px;
+    font-size: 80%;
+    color: #666;
+}
+
+.postcodenl-autocomplete-item-description  {
+    white-space: nowrap;
+}
+
+.postcodenl-autocomplete-item-more {
+    background-image: url(../images/icons/right-open.svg);
+    background-position: center right 5px;
+    background-repeat: no-repeat;
+    background-size: 16px;
+}
+
+.postcodenl-autocomplete-aria-live-region {
     position: absolute;
-    max-height: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0 0 0 0);
 }

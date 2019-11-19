@@ -6,10 +6,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
@@ -23,10 +26,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
@@ -40,10 +46,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
@@ -57,10 +66,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
@@ -74,10 +86,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
@@ -91,10 +106,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
@@ -108,10 +126,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
@@ -125,10 +146,13 @@
                 <script>mage42/postcodenl/css/lookup.css</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/lookup.js</script>
+                <script>mage42/postcodenl/autocomplete-address.min.js</script>
             </action>
             <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
-                <script>mage42/postcodenl/jquery-ui.min.js</script>
+                <script>mage42/postcodenl/autocomplete-address-shipping.min.js</script>
+            </action>
+            <action method="addJs" ifconfig="mage42_postcodenl/config/enabled">
+                <script>mage42/postcodenl/lookup.js</script>
                 <params><![CDATA[data-group="js001"]]></params>
             </action>
         </reference>
