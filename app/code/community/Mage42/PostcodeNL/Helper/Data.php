@@ -275,6 +275,14 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
      */
     protected function _performApiCall($path, $session)
     {
+        if ($this->_getKey() === "")
+            return array(
+                'mage42_postcodenl_message' => 'API Key not set',
+            );
+        if ($this->_getSecret() === "")
+            return array(
+                'mage42_postcodenl_message' => 'API Secret not set',
+            );
         $url = $this->_getServiceUrl() .'/' . $path;
         curl_setopt($this->_curlHandler, CURLOPT_URL, $url);
         curl_setopt($this->_curlHandler, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
@@ -290,26 +298,26 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
         $curlError = curl_error($this->_curlHandler);
         $curlErrorNr = curl_errno($this->_curlHandler);
         if ($curlError !== '')
-            throw new Mage42_PostcodeNL_Helper_Exception_CurlException('Connection error number `%s`: `%s`.', [$curlErrorNr, $curlError]);
+            return $this->_errorResponse('Connection error number `%s`: `%s`.', [$curlErrorNr, $curlError]);
         $jsonResponse = json_decode($response, true);
         switch ($responseStatusCode)
         {
             case 200:
                 if (!is_array($jsonResponse))
-                    throw new Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException('Invalid JSON response from the server for request: ' . $url);
+                    return $this->_errorResponse('Invalid JSON response from the server for request: ' . $url);
                 return $jsonResponse;
             case 400:
-                throw new Mage42_PostcodeNL_Helper_Exception_BadRequestException(vsprintf('Server response code 400, bad request for `%s`.', [$url]));
+                return $this->_errorResponse(vsprintf('Server response code 400, bad request for `%s`.', [$url]));
             case 401:
-                throw new Mage42_PostcodeNL_Helper_Exception_AuthenticationException('Could not authenticate your request, please make sure your API credentials are correct.');
+                return $this->_errorResponse('Could not authenticate your request, please make sure your API credentials are correct.');
             case 403:
-                throw new Mage42_PostcodeNL_Helper_Exception_ForbiddenException('Your account currently has no access to the international API, make sure you have an active subscription.');
+                return $this->_errorResponse('Your account currently has no access to the international API, make sure you have an active subscription.');
             case 429:
-                throw new Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException('Too many requests made, please slow down: ' . $response);
+                return $this->_errorResponse('Too many requests made, please slow down: ' . $response);
             case 503:
-                throw new Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException('The international API server is currently not available: ' . $response);
+                return $this->_errorResponse('The international API server is currently not available: ' . $response);
             default:
-                throw new Mage42_PostcodeNL_Helper_Exception_UnexpectedException(vsprintf('Unexpected server response code `%s`.', [$responseStatusCode]));
+                return $this->_errorResponse(vsprintf('Unexpected server response code `%s`. Please double check if you have filled in the API URL and Account URL [default: https://api.postcode.eu]', [$responseStatusCode]));
         }
     }
 
@@ -444,5 +452,16 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
             return Mage::helper('adminhtml')->getUrl('*/pcnl/lookup', array('_secure' => true));
 
         return Mage::getUrl('mage42_postcodenl/json', array('_secure' => true));
+    }
+
+    /**
+     * @param $message
+     * @return array
+     */
+    protected function _errorResponse($message)
+    {
+        return array(
+            'mage42_postcodenl_message' => $message,
+        );
     }
 }

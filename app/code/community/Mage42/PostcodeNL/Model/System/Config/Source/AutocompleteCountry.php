@@ -9,6 +9,10 @@ class Mage42_PostcodeNL_Model_System_Config_Source_AutocompleteCountry extends M
         $result = array();
         if (!$this->_options) {
             $jsonData = Mage::helper('mage42_postcodenl')->_internationalGetSupportedCountries();
+            if (isset($jsonData['mage42_postcodenl_message']))
+                return array(
+                    array('value' => 'error', 'label' => 'Please check your API credentials')
+                );
             if (sizeof($jsonData) > 0)
                 $this->_options['countries'] = $jsonData;
         }
