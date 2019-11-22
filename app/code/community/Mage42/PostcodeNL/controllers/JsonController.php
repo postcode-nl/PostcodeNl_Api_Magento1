@@ -23,12 +23,11 @@ class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
         $this->getResponse()->setHeader('Content-type', 'application/json', true);
         $context = key($this->getRequest()->getParams());
         $term = $this->getRequest()->getParam($context);
-        $response = json_encode($helper->_internationalAutocomplete(
+        $response = $helper->_internationalAutocomplete(
             $context,
             $term
-        ));
-
-        $this->getResponse()->setBody($response);
+        );
+        $this->_cacheControl($this, $response);
     }
 
     /**
@@ -47,10 +46,23 @@ class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
 
         $this->getResponse()->setHeader('Content-type', 'application/json', true);
         $context = key($this->getRequest()->getParams());
-        $response = json_encode($helper->_internationalGetDetails(
+        $response = $helper->_internationalGetDetails(
             $context
-        ));
+        );
+        $this->_cacheControl($this, $response);
+    }
 
-        $this->getResponse()->setBody($response);
+    /**
+     * @param $action
+     * @param $response
+     */
+    protected function _cacheControl($action, $response) {
+        if (isset($response['cache-control'])) {
+            $cacheControl = $response['cache-control'];
+            unset($response['cache-control']);
+            $action->getResponse()->clearHeader('Cache-Control')->clearHeader('Expires')->clearHeader('Pragma')->setHeader('Cache-Control', $cacheControl)->setBody(json_encode($response));
+        } else {
+            $action->getResponse()->setBody(json_encode($response));
+        }
     }
 }

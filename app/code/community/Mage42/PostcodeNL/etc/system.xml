@@ -45,7 +45,7 @@
                             <show_in_website>0</show_in_website>
                             <show_in_store>0</show_in_store>
                             <validate>validate-length minimum-length-10</validate>
-                            <comment><![CDATA[To get your Postcode.nl API key and secret, please register at <a href='https://services.postcode.nl/adresdata/adres-validatie' target='_blank'>Postcode.nl API</a>.]]></comment>
+                            <comment><![CDATA[To get your Postcode.nl API key and secret, please register at <a href='https://account.postcode.nl' target='_blank'>Postcode.nl API</a>.]]></comment>
                         </api_secret>
                         <api_user>
                             <label>API user</label>

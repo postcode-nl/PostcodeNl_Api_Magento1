@@ -1,4 +1,8 @@
 <?php
+
+/**
+ * Class Mage42_PostcodeNL_Helper_Data
+ */
 class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 {
     const SESSION_HEADER_KEY = 'X-Autocomplete-Session';
@@ -19,6 +23,12 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     protected $_httpClientError = null;
     protected $_debuggingOverride = false;
 
+    protected $_headers = [];
+
+    /**
+     * Mage42_PostcodeNL_Helper_Data constructor.
+     * @throws Mage42_PostcodeNL_Helper_Exception_CurlNotLoadedException
+     */
     public function __construct()
     {
         if (!extension_loaded('curl'))
@@ -33,18 +43,6 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 
         if (isset($_SERVER['HTTP_REFERER']))
             curl_setopt($this->_curlHandler, CURLOPT_REFERER, $_SERVER['HTTP_REFERER']);
-
-        curl_setopt($this->_curlHandler, CURLOPT_HEADERFUNCTION, function($curl, $header) {
-            $length = strlen($header);
-            $headerParts = explode(':', $header, 2);
-            if (count($headerParts) < 2)
-                return $length;
-            $headerName = $headerParts[0];
-            $headerValue = $headerParts[1];
-            $this->_mostRecentResponseHeaders[strtolower(trim($headerName))][] = trim($headerValue);
-            return $length;
-        });
-
     }
 
     /**
@@ -126,16 +124,9 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * @param $context
      * @param $term
-     * @param $session
-     * @return mixed
-     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
-     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
-     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
-     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
-     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
-     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     * @param null $session
+     * @return array|mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_NotAValidPHPVersionException
      *
      * @see https://api.postcode.nl/documentation/international/v1/Autocomplete/autocomplete
      */
@@ -146,16 +137,9 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 
     /**
      * @param $context
-     * @param $session
-     * @return mixed
-     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
-     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
-     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
-     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
-     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
-     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     * @param null $session
+     * @return array|mixed
+     * @throws Mage42_PostcodeNL_Helper_Exception_NotAValidPHPVersionException
      *
      * @see https://api.postcode.nl/documentation/international/v1/Autocomplete/getDetails
      */
@@ -165,15 +149,7 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * @return mixed
-     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
-     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
-     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
-     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
-     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
-     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     * @return array|mixed
      *
      * @see https://api.postcode.nl/documentation/international/v1/Autocomplete/getSupportedCountries
      */
@@ -186,18 +162,8 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
      * @param $postcode
      * @param $houseNumber
      * @param $houseNumberAddition
-     * @return mixed
-     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
-     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
-     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
-     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
+     * @return array|mixed
      * @throws Mage42_PostcodeNL_Helper_Exception_InvalidPostcodeException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
-     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
-     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
-     *
-     * @see https://api.postcode.nl/documentation
      */
     public function _dutchAddressByPostcode($postcode, $houseNumber, $houseNumberAddition)
     {
@@ -215,31 +181,33 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * @return mixed
-     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
-     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
-     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
-     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
-     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
-     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     * @return array|mixed
      */
     public function _accountInfo()
     {
         return $this->_performApiCall('account/v1/info', null);
     }
 
+    /**
+     * @return array
+     */
     protected function _getApiCallResponseHeaders()
     {
         return $this->_mostRecentResponseHeaders;
     }
 
+    /**
+     * @param $postcode
+     * @return bool
+     */
     protected function _isValidDutchPostcodeFormat($postcode)
     {
         return (bool) preg_match('~^[1-9]\d{3}\s?[a-zA-Z]{2}$~', $postcode);
     }
 
+    /**
+     *
+     */
     public function __destruct()
     {
         curl_close($this->_curlHandler);
@@ -247,7 +215,7 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 
     /**
      * @return string
-     * @throws Exception
+     * @throws Mage42_PostcodeNL_Helper_Exception_NotAValidPHPVersionException
      */
     public function generateSessionString()
     {
@@ -263,15 +231,7 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * @param $path
      * @param $session
-     * @return mixed
-     * @throws Mage42_PostcodeNL_Helper_Exception_AuthenticationException
-     * @throws Mage42_PostcodeNL_Helper_Exception_BadRequestException
-     * @throws Mage42_PostcodeNL_Helper_Exception_CurlException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ForbiddenException
-     * @throws Mage42_PostcodeNL_Helper_Exception_InvalidJsonResponseException
-     * @throws Mage42_PostcodeNL_Helper_Exception_ServerUnavailableException
-     * @throws Mage42_PostcodeNL_Helper_Exception_TooManyRequestsException
-     * @throws Mage42_PostcodeNL_Helper_Exception_UnexpectedException
+     * @return array|mixed
      */
     protected function _performApiCall($path, $session)
     {
@@ -291,15 +251,33 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
             curl_setopt($this->_curlHandler, CURLOPT_HTTPHEADER, [
                static::SESSION_HEADER_KEY . ': ' . $session,
             ]);
-
         $this->_mostRecentResponseHeaders = [];
+
+        curl_setopt($this->_curlHandler, CURLOPT_HEADERFUNCTION, function($curl, $header) {
+            $length = strlen($header);
+            $headerParts = explode(':', $header, 2);
+            if (count($headerParts) < 2)
+                return $length;
+            $headerName = $headerParts[0];
+            $headerValue = $headerParts[1];
+            $this->_mostRecentResponseHeaders[strtolower(trim($headerName))][] = trim($headerValue);
+            return $length;
+        });
+
         $response = curl_exec($this->_curlHandler);
         $responseStatusCode = curl_getinfo($this->_curlHandler, CURLINFO_RESPONSE_CODE);
+
         $curlError = curl_error($this->_curlHandler);
         $curlErrorNr = curl_errno($this->_curlHandler);
         if ($curlError !== '')
-            return $this->_errorResponse('Connection error number `%s`: `%s`.', [$curlErrorNr, $curlError]);
+            return $this->_errorResponse('Connection error number `' . $curlErrorNr . '`: `' . $curlError . '`.');
         $jsonResponse = json_decode($response, true);
+
+        if (isset($this->_mostRecentResponseHeaders['cache-control'])) {
+            $cacheControl = $this->_mostRecentResponseHeaders['cache-control'][0];
+            $jsonResponse['cache-control'] = $cacheControl;
+        }
+
         switch ($responseStatusCode)
         {
             case 200:
@@ -347,7 +325,7 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * @return array
+     * @return false|string
      */
     protected function _getAllowedCountries() {
         return json_encode($this->_getStoreConfig('mage42_postcodenl/advanced_config/select_countries_for_autocomplete'));
