@@ -66,6 +66,7 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 					useStreet3AsHouseNumberAddition: ' . $this->_getConfigBoolString('mage42_postcodenl/advanced_config/use_street3_as_housenumber_addition') . ',
 					blockPostOfficeBoxAddresses: '. $this->_getConfigBoolString('mage42_postcodenl/advanced_config/block_postofficeboxaddresses') . ',
 					neverHideCountry: ' . $this->_getConfigBoolString('mage42_postcodenl/advanced_config/never_hide_country') . ',
+					moveCountry: ' . $this->_getConfigBoolString('mage42_postcodenl/advanced_config/move_country_above_adres') . ',
 					showcase: ' . $this->_getConfigBoolString('mage42_postcodenl/development_config/api_showcase') . ',
 					debug: ' . ($this->isDebugging() ? 'true' : 'false') . ',
 					translations: {
