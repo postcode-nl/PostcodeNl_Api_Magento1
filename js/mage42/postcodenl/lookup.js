@@ -16,14 +16,9 @@ var regionIdField;
 var countryField;
 var wrapper;
 
-document.observe("dom:loaded", MAGE42_START_FUNCTION = function() {
+document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
     if (typeof MAGE42PCNL_CONFIG === "undefined")
         return;
-    if (typeof String.prototype.trim !== "function") {
-        String.prototype.trim = function () {
-            return this.replace(/^\s+|\s+$/g, '');
-        }
-    }
     var Mage42_PostcodeNL = {
         /**
          *
@@ -56,14 +51,14 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function() {
                 iso3Code = autocompleteCountriesClone[autocompleteCountries.indexOf(elementValue)].toLocaleLowerCase();
                 if (jQuery('#' + prefix.split(':')[0] + '\\:mage42-wrapper').length === 0) {
                     street1Field.up('li').insert({
-                        before: '<div id="' + prefix + 'mage42-wrapper" class="field input-postcode ' + prefix + 'autocomplete-mage42-wrapper"><label for="' + prefix + 'autocomplete-mage42" class="required">' + MAGE42PCNL_CONFIG.translations.streetNameLabel + ' <em class="required">*</em></label><div class="input-box"><div class="field-wrapper"><input type="text" title="Mage42 Postcode Autocomplete" placeholder="' + MAGE42PCNL_CONFIG.translations.streetNamePlaceholder + '" name="' + prefix + 'autocomplete-mage42" id="' + prefix + 'autocomplete-mage42" value="" class="input-text input-autocomplete-term input-autocomplete-int-term postcodenl-autocomplete-address-input postcodenl-autocomplete-address-input-blank required-entry" /></div></div></div>'
+                        before: '<div id="' + prefix + 'mage42-wrapper" class="field input-postcode ' + prefix + 'autocomplete-mage42-wrapper"><label for="' + prefix + 'autocomplete-mage42" class="required">' + MAGE42PCNL_CONFIG.translations.streetNameLabel + ' <em class="required">*</em></label><div class="input-box"><div class="field-wrapper"><input type="text" title="Mage42 Postcode Autocomplete" placeholder="' + MAGE42PCNL_CONFIG.translations.streetNamePlaceholder + '" name="' + prefix + 'autocomplete-mage42" id="' + prefix + 'autocomplete-mage42" value="" class="input-text input-autocomplete-term input-autocomplete-int-term  required-entry" /></div></div></div>'
                     });
                 }
                 var inputElement = $(prefix + 'autocomplete-mage42');
                 inputElement.observe('keyup', function (e) {
                     let autocompleteUrl = MAGE42PCNL_CONFIG.baseUrl + "autocomplete";
                     let addressDetailsUrl = MAGE42PCNL_CONFIG.baseUrl + "addressdetails";
-                    postcodenl.AutocompleteAddress(inputElement, {
+                    var autocomplete = postcodenl.AutocompleteAddress(inputElement, {
                         autocompleteUrl: autocompleteUrl,
                         addressDetailsUrl: addressDetailsUrl,
                         autoFocus: true,
@@ -73,7 +68,7 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function() {
                     });
                     inputElement.addEventListener('autocomplete-select', function (e) {
                         if (e.detail.precision === 'Address') {
-                            postcodenl.getDetails(e.detail.context, function (result) {
+                            autocomplete.getDetails(e.detail.context, function (result) {
                                 postcodeField.setValue(result.address.postcode);
                                 cityField.setValue(result.address.locality);
 
@@ -133,10 +128,9 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function() {
         if (moveCountry) $('billing:street1').up('li').insert({before: $('billing:country_id').parentNode.parentNode});
     }
     let elementValue = $(countryField).options[$(countryField).selectedIndex].value;
-    if( autocompleteCountries.includes(elementValue))
-    {
+    if (autocompleteCountries.includes(elementValue)) {
         Mage42_PostcodeNL.setInputFields("billing:", countryField);
-        Mage42_PostcodeNL.autocomplete("billing:", elementValue, PostcodeNl);
+        Mage42_PostcodeNL.autocomplete("billing:", elementValue, Object.assign({}, PostcodeNl));
     }
 
     $(countryField).observe('change', function (e) {
@@ -150,7 +144,7 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function() {
         $(countryField).observe('change', function (e) {
             Mage42_PostcodeNL.setInputFields("shipping:", "customerAddress");
             let elementValue = this.value;
-            Mage42_PostcodeNL.autocomplete("shipping:", elementValue, PostcodeNlShipping);
+            Mage42_PostcodeNL.autocomplete("shipping:", elementValue, Object.assign({}, PostcodeNl));
         });
     }
 });
