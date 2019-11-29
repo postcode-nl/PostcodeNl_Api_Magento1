@@ -58,7 +58,7 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
                 inputElement.observe('keyup', function (e) {
                     let autocompleteUrl = MAGE42PCNL_CONFIG.baseUrl + "autocomplete";
                     let addressDetailsUrl = MAGE42PCNL_CONFIG.baseUrl + "addressdetails";
-                    var autocomplete = postcodenl.AutocompleteAddress(inputElement, {
+                    var autocomplete = new postcodenl.AutocompleteAddress(inputElement, {
                         autocompleteUrl: autocompleteUrl,
                         addressDetailsUrl: addressDetailsUrl,
                         autoFocus: true,
