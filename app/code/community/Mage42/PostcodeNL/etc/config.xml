@@ -22,7 +22,17 @@
                 </mage42_postcodenl>
             </updates>
         </layout>
-
+        <events>
+            <sales_order_place_after>
+                <observers>
+                    <someeventname>
+                        <type>singleton</type>
+                        <class>Mage42_PostcodeNL_Model_Observer</class>
+                        <method>ordercomment</method>
+                    </someeventname>
+                </observers>
+            </sales_order_place_after>
+        </events>
     </frontend>
     <admin>
         <routers>
@@ -74,11 +84,11 @@
         <events>
             <admin_system_config_changed_section_mage42_postcodenl>
                 <observers>
-                    <postcodenl_admin_change>
+                    <mage42_postcodenl>
                         <type>singleton</type>
                         <class>Mage42_PostcodeNL_Model_Observer</class>
                         <method>adminConfigurationChanged</method>
-                    </postcodenl_admin_change>
+                    </mage42_postcodenl>
                 </observers>
             </admin_system_config_changed_section_mage42_postcodenl>
         </events>

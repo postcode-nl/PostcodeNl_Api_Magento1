@@ -19,7 +19,7 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
     for (let i = 0; i < autocompleteCountries.length; i++) {
         [autocompleteCountries[i], autocompleteCountriesClone[i]] = autocompleteCountries[i].split("-");
     }
-    
+
     var Mage42_PostcodeNL = {
         /**
          *
