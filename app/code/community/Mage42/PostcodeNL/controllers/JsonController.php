@@ -19,7 +19,8 @@ class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
     public function autocompleteAction() {
         /** @var Mage42_PostcodeNL_Helper_Data $helper */
         $helper = Mage::helper('mage42_postcodenl');
-
+        $this->getResponse()->setHeader('Expires', "", true);
+        $this->getResponse()->setHeader('Pragma', "", true);
         $this->getResponse()->setHeader('Content-type', 'application/json', true);
         $context = key($this->getRequest()->getParams());
         $term = $this->getRequest()->getParam($context);
@@ -57,9 +58,10 @@ class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
      * @param $response
      */
     protected function _cacheControl($action, $response) {
-        if (isset($response['cache-control'])) {
-            $cacheControl = $response['cache-control'];
-            unset($response['cache-control']);
+        if (isset($response['Cache-Control'])) {
+            $cacheControl = $response['Cache-Control'];
+            unset($response['Cache-Control']);
+            unset($response['Expires']);
             $action->getResponse()->clearHeader('Cache-Control')->clearHeader('Expires')->clearHeader('Pragma')->setHeader('Cache-Control', $cacheControl)->setBody(json_encode($response));
         } else {
             $action->getResponse()->setBody(json_encode($response));
