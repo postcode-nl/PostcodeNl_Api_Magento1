@@ -6,10 +6,20 @@ var moveCountry;
 var autocompleteCountries, autocompleteCountriesClone, iso3Code;
 
 var postcodeField, cityField, street1Field, street2Field, regionIdField, countryField, wrapper;
+var isUsed = false;
 
 document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
     if (typeof MAGE42PCNL_CONFIG === "undefined")
         return;
+
+    autocompleteCountries = MAGE42PCNL_CONFIG.autocompleteCountries.split(",");
+    moveCountry = MAGE42PCNL_CONFIG.moveCountry;
+    autocompleteCountriesClone = autocompleteCountries.slice();
+
+    for (let i = 0; i < autocompleteCountries.length; i++) {
+        [autocompleteCountries[i], autocompleteCountriesClone[i]] = autocompleteCountries[i].split("-");
+    }
+
     var Mage42_PostcodeNL = {
         /**
          *
@@ -49,6 +59,7 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
          * @param postcodenl PostcodeNl || PostcodeNlShipping
          */
         autocomplete: function (prefix, elementValue, postcodenl) {
+            isUsed = true;
             if (autocompleteCountries.includes(elementValue)) {
                 iso3Code = autocompleteCountriesClone[autocompleteCountries.indexOf(elementValue)].toLocaleLowerCase();
                 let wrapper = jQuery('#'+prefix.split(':')[0] + '\\:mage42-wrapper');
@@ -112,14 +123,6 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
             }
         }
     };
-
-    autocompleteCountries = MAGE42PCNL_CONFIG.autocompleteCountries.split(",");
-    moveCountry = MAGE42PCNL_CONFIG.moveCountry;
-    autocompleteCountriesClone = autocompleteCountries.slice();
-
-    for (let i = 0; i < autocompleteCountries.length; i++) {
-        [autocompleteCountries[i], autocompleteCountriesClone[i]] = autocompleteCountries[i].split("-");
-    }
 
     if (document.getElementById('country') != null) {
         countryField = "country";
