@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Mage42_PostcodeNL>
-            <version>0.0.1</version>
+            <version>0.1.1</version>
         </Mage42_PostcodeNL>
     </modules>
     <frontend>
@@ -22,17 +22,7 @@
                 </mage42_postcodenl>
             </updates>
         </layout>
-        <events>
-            <sales_order_place_after>
-                <observers>
-                    <someeventname>
-                        <type>singleton</type>
-                        <class>Mage42_PostcodeNL_Model_Observer</class>
-                        <method>ordercomment</method>
-                    </someeventname>
-                </observers>
-            </sales_order_place_after>
-        </events>
+
     </frontend>
     <admin>
         <routers>
@@ -51,18 +41,57 @@
                 <class>Mage42_PostcodeNL_Helper</class>
             </mage42_postcodenl>
         </helpers>
+        <models>
+            <postcodenl>
+                <class>Mage42_PostcodeNL_Model</class>
+                <resourceModel>postcodenl_mysql4</resourceModel>
+            </postcodenl>
+        </models>
         <blocks>
             <mage42_postcodenl>
                 <class>Mage42_PostcodeNL_Block</class>
             </mage42_postcodenl>
         </blocks>
         <resources>
-            <mage42_postcodenl_setup>
+            <postcodenl_setup>
                 <setup>
                     <module>Mage42_PostcodeNL</module>
+                    <class>Mage_Sales_Model_Mysql4_Setup</class>
                 </setup>
-            </mage42_postcodenl_setup>
+                <connection>
+                    <use>core_setup</use>
+                </connection>
+            </postcodenl_setup>
+            <postcodenl_write>
+                <connection>
+                    <use>core_write</use>
+                </connection>
+            </postcodenl_write>
+            <postcodenl_read>
+                <connection>
+                    <use>core_read</use>
+                </connection>
+            </postcodenl_read>
         </resources>
+        <fieldsets>
+            <sales_convert_quote>
+                <used_postcodenl_api><to_order>*</to_order></used_postcodenl_api>
+            </sales_convert_quote>
+            <sales_convert_order>
+                <used_postcodenl_api><to_quote>*</to_quote></used_postcodenl_api>
+            </sales_convert_order>
+        </fieldsets>
+        <events>
+            <checkout_type_onepage_save_order>
+                <observers>
+                    <used_postcodenl_api_observer>
+                        <type>singleton</type>
+                        <class>Mage42_PostcodeNL_Model_Observer</class>
+                        <method>saveUsedPostcodenlApi</method>
+                    </used_postcodenl_api_observer>
+                </observers>
+            </checkout_type_onepage_save_order>
+        </events>
     </global>
     <adminhtml>
         <layout>
@@ -84,11 +113,11 @@
         <events>
             <admin_system_config_changed_section_mage42_postcodenl>
                 <observers>
-                    <mage42_postcodenl>
+                    <postcodenl_admin_change>
                         <type>singleton</type>
                         <class>Mage42_PostcodeNL_Model_Observer</class>
                         <method>adminConfigurationChanged</method>
-                    </mage42_postcodenl>
+                    </postcodenl_admin_change>
                 </observers>
             </admin_system_config_changed_section_mage42_postcodenl>
         </events>

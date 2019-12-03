@@ -1,10 +1,11 @@
 <?php
 class Mage42_PostcodeNL_Model_Observer
 {
-    public function ordercomment($observer)
-    {
-        $_order = $observer->getEvent()->getOrder();
-        $_order->addStatusToHistory($_order->getStatus(),'some messagge',false);
-        $_order->save();
-    }
+   public function saveUsedPostcodenlApi($observer)
+   {
+       $event = $observer->getEvent();
+       /** @var Mage_Sales_Model_Order $order */
+       $order = $event->getOrder();
+       $order->setCustomerNote("Used postcodenl API");
+   }
 }
