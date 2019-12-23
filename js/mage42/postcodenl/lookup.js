@@ -2,23 +2,91 @@
 
 var MAGE42_START_FUNCTION;
 
-var moveCountry;
-var autocompleteCountries, autocompleteCountriesClone, iso3Code;
+if (typeof Object.assign !== 'function') {
+    // Must be writable: true, enumerable: false, configurable: true
+    Object.defineProperty(Object, "assign", {
+        value: function assign(target, varArgs) { // .length of function is 2
+            'use strict';
+            if (target === null || target === undefined) {
+                throw new TypeError('Cannot convert undefined or null to object');
+            }
 
-var postcodeField, cityField, street1Field, street2Field, regionIdField, countryField, wrapper;
-var isUsed = false;
+            var to = Object(target);
+
+            for (var index = 1; index < arguments.length; index++) {
+                var nextSource = arguments[index];
+
+                if (nextSource !== null && nextSource !== undefined) {
+                    for (var nextKey in nextSource) {
+                        // Avoid bugs when hasOwnProperty is shadowed
+                        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                            to[nextKey] = nextSource[nextKey];
+                        }
+                    }
+                }
+            }
+            return to;
+        },
+        writable: true,
+        configurable: true
+    });
+}
+
 
 document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
     if (typeof MAGE42PCNL_CONFIG === "undefined")
         return;
 
-    autocompleteCountries = MAGE42PCNL_CONFIG.autocompleteCountries.split(",");
-    moveCountry = MAGE42PCNL_CONFIG.moveCountry;
-    autocompleteCountriesClone = autocompleteCountries.slice();
-
+    var autocompleteCountries = MAGE42PCNL_CONFIG.autocompleteCountries.split(",");
+    var moveCountry = MAGE42PCNL_CONFIG.moveCountry;
+    var autocompleteCountriesClone = autocompleteCountries.slice();
+    var countryField, wrapper;
     for (let i = 0; i < autocompleteCountries.length; i++) {
         [autocompleteCountries[i], autocompleteCountriesClone[i]] = autocompleteCountries[i].split("-");
     }
+
+    var autocomplete = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
+
+    var checkbox = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
+
+    var postcodeField = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
+    var cityField = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
+    var street1Field = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
+    var street2Field = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
+    var regionIdField = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
+    var regionField = {
+        'billing:': null,
+        'shipping:': null,
+        'account:': null
+    };
 
     var Mage42_PostcodeNL = {
         /**
@@ -28,18 +96,19 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
          */
         setInputFields: function (prefix, typeField) {
             if (typeField === "country") {
-                postcodeField = $('postcode') || $('zip');
-                cityField = $('city');
-                street1Field = $('street_1');
-                street2Field = $('street_2');
-                regionIdField = $('region_id') || $('region');
+                postcodeField[prefix] = $('postcode') || $('zip');
+                cityField[prefix] = $('city');
+                street1Field[prefix] = $('street_1');
+                street2Field[prefix] = $('street_2');
+                regionIdField[prefix] = $('region_id');
+                regionField[prefix] = $('region');
             } else {
-
-                postcodeField = $(prefix + 'postcode') || $(prefix + 'zip');
-                cityField = $(prefix + 'city');
-                street1Field = $(prefix + 'street1');
-                street2Field = $(prefix + 'street2');
-                regionIdField = $(prefix + 'region_id');
+                postcodeField[prefix] = $(prefix + 'postcode') || $(prefix + 'zip');
+                cityField[prefix] = $(prefix + 'city');
+                street1Field[prefix] = $(prefix + 'street1');
+                street2Field[prefix] = $(prefix + 'street2');
+                regionIdField[prefix] = $(prefix + 'region_id');
+                regionField[prefix] = $(prefix + 'region');
             }
         },
         /**
@@ -47,26 +116,35 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
          * @param prefix string
          */
         resetFields: function(prefix) {
-            postcodeField.setValue("");
-            cityField.setValue("");
-            street1Field.setValue("");
-            street2Field.setValue("");
-            regionIdField.setValue("");
+            postcodeField[prefix].setValue("");
+            cityField[prefix].setValue("");
+            street1Field[prefix].setValue("");
+            street2Field[prefix].setValue("");
+            regionIdField[prefix].setValue("");
+            regionField[prefix].setValue("");
         },
         /**
          *
          * @param type
          * @param display
+         * @param prefix
          */
-        displayFields: function(type, display) {
-            postcodeField.setAttribute("type", type);
-            cityField.setAttribute("type", type);
-            postcodeField.parentNode.parentNode.firstChild.nextSibling.style.display = display;
-            cityField.parentNode.parentNode.firstChild.nextSibling.style.display = display;
-            street1Field.setAttribute("type", type);
-            street1Field.parentNode.parentNode.firstChild.nextSibling.style.display = display;
-            street2Field.setAttribute("type", type);
-            street2Field.parentNode.parentNode.firstChild.nextSibling.style.display = display;
+        displayFields: function(type, display, prefix) {
+            postcodeField[prefix].setAttribute("type", type);
+            cityField[prefix].setAttribute("type", type);
+            postcodeField[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = display;
+            cityField[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = display;
+            street1Field[prefix].setAttribute("type", type);
+            street1Field[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = display;
+            street2Field[prefix].setAttribute("type", type);
+            street2Field[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = display;
+            regionIdField[prefix].setAttribute("type", type);
+            //regionIdField.parentNode.parentNode.firstChild.nextSibling.style.display = display;
+            regionIdField[prefix].setStyle({
+                'display': display
+            });
+            regionField[prefix].setAttribute("type", type);
+            regionField[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = display;
         },
         /**
          *
@@ -75,78 +153,92 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
          * @param postcodenl PostcodeNl || PostcodeNlShipping
          */
         autocomplete: function (prefix, elementValue, postcodenl) {
-            isUsed = false;
             if (isAutocompleteCountry(elementValue)) {
-                isUsed = true;
-                iso3Code = autocompleteCountriesClone[autocompleteCountries.indexOf(elementValue)].toLocaleLowerCase();
+                var iso3Code = autocompleteCountriesClone[autocompleteCountries.indexOf(elementValue)].toLocaleLowerCase();
                 let wrapper;
-                if (prefix === "") {
-                    $(jQuery('#mage42-wrapper')).remove();
-                    $(jQuery('#billing\\:mage42-wrapper')).remove()
-                    $(jQuery('#shipping\\:mage42-wrapper')).remove()
+                /*if (prefix === "account:") {
+                  //  $(jQuery('#mage42-wrapper')).remove();
+                    $(jQuery('#billing\\:mage42-wrapper')).remove();
+                    $(jQuery('#shipping\\:mage42-wrapper')).remove();
+                }*/
 
-                }
-                else {
+                /* else {
                     wrapper = jQuery('#' + prefix.split(':')[0] + '\\:mage42-wrapper');
-                    $(wrapper).remove();
-                }
+                    $(wrapper).remove();,
+                }*/
                 Mage42_PostcodeNL.resetFields(prefix);
-                street1Field.up('li').insert({
-                    before: '<div id="' + prefix + 'mage42-wrapper" class="field input-postcode ' + prefix + 'autocomplete-mage42-wrapper"><label for="' + prefix + 'autocomplete-mage42" class="required">' + MAGE42PCNL_CONFIG.translations.streetNameLabel + ' <em class="required">*</em></label><div class="input-box"><div class="field-wrapper"><input type="text" title="Mage42 Postcode Autocomplete" placeholder="' + MAGE42PCNL_CONFIG.translations.streetNamePlaceholder + '" name="' + prefix + 'autocomplete-mage42" id="' + prefix + 'autocomplete-mage42" value="" class="input-text input-autocomplete-term input-autocomplete-int-term required-entry" /></div></div><div id="' + prefix + 'mage42-checkbox" class="wide control"><div class="fields"><div class="input-box" style="display: block; width: 100%"><input type="checkbox" title="' + MAGE42PCNL_CONFIG.translations.checkboxTitle + '" name="' + prefix + 'mage42_checkbox" id="' + prefix + 'mage42_checkbox" value="" class="checkbox"/><label for="' + prefix + 'mage42_checkbox">' + MAGE42PCNL_CONFIG.translations.checkboxText + '</label></div></div></div></div>'
-                });
-                Mage42_PostcodeNL.displayFields('hidden', 'none');
-                let checkbox = $(prefix + 'mage42_checkbox');
-                checkbox.observe('change', function (e) {
-                    if (checkbox.checked) {
-                        Mage42_PostcodeNL.displayFields('text', 'block');
-                    } else {
-                        Mage42_PostcodeNL.displayFields('hidden', 'none');
-                    }
-                });
+                if (jQuery('#' + prefix.split(':')[0] + '\\:mage42-wrapper').length <= 0) {
+                    street1Field[prefix].up('li').insert({
+                        before: '<div id="' + prefix + 'mage42-wrapper" class="field input-postcode ' + prefix + 'autocomplete-mage42-wrapper"><label for="' + prefix + 'autocomplete-mage42" class="required">' + MAGE42PCNL_CONFIG.translations.streetNameLabel + ' <em class="required">*</em></label><div class="input-box"><div class="field-wrapper"><input type="text" title="Mage42 Postcode Autocomplete" placeholder="' + MAGE42PCNL_CONFIG.translations.streetNamePlaceholder + '" name="' + prefix + 'autocomplete-mage42" id="' + prefix + 'autocomplete-mage42" value="" class="input-text input-autocomplete-term input-autocomplete-int-term required-entry" /></div></div><div id="' + prefix + 'mage42-checkbox" class="wide control"><div class="fields"><div class="input-box" style="display: block; width: 100%"><input type="checkbox" title="' + MAGE42PCNL_CONFIG.translations.checkboxTitle + '" name="' + prefix + 'mage42_checkbox" id="' + prefix + 'mage42_checkbox" value="" class="checkbox"/><label for="' + prefix + 'mage42_checkbox">' + MAGE42PCNL_CONFIG.translations.checkboxText + '</label></div></div></div></div>'
+                    });
+                }
+                Mage42_PostcodeNL.displayFields('hidden', 'none', prefix);
 
                 var inputElement = $(prefix + 'autocomplete-mage42');
-                let autocompleteUrl = MAGE42PCNL_CONFIG.baseUrl + "autocomplete";
-                let addressDetailsUrl = MAGE42PCNL_CONFIG.baseUrl + "addressdetails";
-                var autocomplete = new postcodenl.AutocompleteAddress(inputElement, {
+                if (autocomplete[prefix] === null) {
+                    checkbox[prefix] = $(prefix + 'mage42_checkbox');
+                    checkbox[prefix].observe('change', function (e) {
+                        if (checkbox[prefix].checked) {
+                            Mage42_PostcodeNL.displayFields('text', 'block', prefix);
+                        } else {
+                            Mage42_PostcodeNL.displayFields('hidden', 'none', prefix);
+                        }
+                    });
+                    let autocompleteUrl = MAGE42PCNL_CONFIG.baseUrl + "autocomplete";
+                    let addressDetailsUrl = MAGE42PCNL_CONFIG.baseUrl + "addressdetails";
+                    autocomplete[prefix] = new postcodenl.AutocompleteAddress(inputElement, {
+                        autocompleteUrl: autocompleteUrl,
+                        addressDetailsUrl: addressDetailsUrl,
+                        autoFocus: true,
+                        autoSelect: true,
+                        context: iso3Code,
+                        delay: 300
+                    });
+                } else {
+                    checkbox[prefix].checked = false;
+                    autocomplete[prefix].setCountry(iso3Code);
+                }
+
+                /*var autocomplete = new postcodenl.AutocompleteAddress(inputElement, {
                     autocompleteUrl: autocompleteUrl,
                     addressDetailsUrl: addressDetailsUrl,
                     autoFocus: true,
                     autoSelect: true,
                     context: iso3Code,
                     delay: 300
-                });
+                });*/
                 inputElement.addEventListener('autocomplete-select', function (e) {
                     if (e.detail.precision === 'Address') {
-                        autocomplete.getDetails(e.detail.context, function (result) {
-                            postcodeField.setValue(result.address.postcode);
-                            cityField.setValue(result.address.locality);
+                        autocomplete[prefix].getDetails(e.detail.context, function (result) {
+                            postcodeField[prefix].setValue(result.address.postcode);
+                            cityField[prefix].setValue(result.address.locality);
 
                             if (MAGE42PCNL_CONFIG.useStreet2AsHouseNumber) {
-                                street1Field.setValue(result.address.street);
-                                street2Field.setValue(result.address.buildingNumber);
+                                street1Field[prefix].setValue(result.address.street);
+                                street2Field[prefix].setValue(result.address.building);
                             } else {
-                                street1Field.setValue(result.address.street + " " + result.address.buildingNumber);
+                                street1Field[prefix].setValue(result.address.street + " " + result.address.building);
                             }
                             if (typeof result.details[iso3Code + "FederalState"] !== 'undefined') {
-                                jQuery(regionIdField).find("option[title='" + result.details[iso3Code + 'FederalState']['name'] + "']").prop('selected', true);
+                                jQuery(regionIdField[prefix]).find("option[title='" + result.details[iso3Code + 'FederalState']['name'] + "']").prop('selected', true);
                             }
                         });
                     }
                 });
             } else {
 
-                if (jQuery('#' + prefix.split(':')[0] + '\\:mage42-wrapper').length === 1) {
+                /*if (jQuery('#' + prefix.split(':')[0] + '\\:mage42-wrapper').length === 1) {
                     street1Field.up('li').previousElementSibling.remove();
-                }
-                postcodeField.setAttribute("type", "text");
-                cityField.setAttribute("type", "text");
-                postcodeField.parentNode.parentNode.firstChild.nextSibling.style.display = "block";
-                cityField.parentNode.parentNode.firstChild.nextSibling.style.display = "block";
+                }*/
+                postcodeField[prefix].setAttribute("type", "text");
+                cityField[prefix].setAttribute("type", "text");
+                postcodeField[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = "block";
+                cityField[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = "block";
 
-                street1Field.setAttribute("type", "text");
-                street1Field.parentNode.parentNode.firstChild.nextSibling.style.display = "block";
-                street2Field.setAttribute("type", "text");
-                street2Field.parentNode.parentNode.firstChild.nextSibling.style.display = "block";
+                street1Field[prefix].setAttribute("type", "text");
+                street1Field[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = "block";
+                street2Field[prefix].setAttribute("type", "text");
+                street2Field[prefix].parentNode.parentNode.firstChild.nextSibling.style.display = "block";
             }
         }
     };
@@ -159,12 +251,17 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
         if (moveCountry) $('billing:street1').up('li').insert({before: $('billing:country_id').parentNode.parentNode});
     }
     let elementValue = $(countryField).options[$(countryField).selectedIndex].value;
-    if (isAutocompleteCountry(elementValue)) {
-        Mage42_PostcodeNL.setInputFields("billing:", countryField);
-        Mage42_PostcodeNL.autocomplete("billing:", elementValue, Object.assign({}, PostcodeNl));
-    }
 
     if (document.getElementsByClassName('my-account')[0] === undefined) {
+
+        if (isAutocompleteCountry(elementValue)) {
+            Mage42_PostcodeNL.setInputFields("billing:", 'billing:country_id');
+            Mage42_PostcodeNL.autocomplete("billing:", elementValue, Object.assign({}, PostcodeNl));
+
+            Mage42_PostcodeNL.setInputFields("shipping:", 'shipping:country_id');
+            Mage42_PostcodeNL.autocomplete("shipping:", elementValue, Object.assign({}, PostcodeNl));
+        }
+
         $('billing:country_id').observe('change', function (e) {
             Mage42_PostcodeNL.setInputFields("billing:");
             let elementValue = this.value;
@@ -177,10 +274,15 @@ document.observe("dom:loaded", MAGE42_START_FUNCTION = function () {
             Mage42_PostcodeNL.autocomplete("shipping:", elementValue, Object.assign({}, PostcodeNl));
         });
     } else {
+        if (isAutocompleteCountry(elementValue)) {
+            Mage42_PostcodeNL.setInputFields("account:", countryField);
+            Mage42_PostcodeNL.autocomplete("account:", elementValue, Object.assign({}, PostcodeNl));
+        }
+
         $('country').observe('change', function (e) {
-            Mage42_PostcodeNL.setInputFields("", "country");
+            Mage42_PostcodeNL.setInputFields("account:", "country");
             let elementValue = this.value;
-            Mage42_PostcodeNL.autocomplete("", elementValue, Object.assign({}, PostcodeNl));
+            Mage42_PostcodeNL.autocomplete("account:", elementValue, Object.assign({}, PostcodeNl));
         });
     }
 

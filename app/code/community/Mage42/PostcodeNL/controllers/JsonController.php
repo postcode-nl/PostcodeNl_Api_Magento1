@@ -46,6 +46,9 @@ class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
         if (isset($response['cache-control'])) {
             $cacheControl = $response['cache-control'];
             unset($response['cache-control']);
+            header_remove('Cache-Control');
+            header_remove('Pragma');
+            header_remove('Expires');
             $action->getResponse()->clearHeader('Cache-Control')->clearHeader('Expires')->clearHeader('Pragma')->setHeader('Cache-Control', $cacheControl)->setBody(json_encode($response));
         } else {
             $action->getResponse()->setBody(json_encode($response));
