@@ -1,16 +1,11 @@
 {
-    "name": "mage42/postcode_nl",
-    "description": "PostcodeNL integration with Magento 1",
+    "name": "postcode-nl/api-magento1-module",
+    "description": "Postcode.nl International Address API module for Magento 1. Adds autocompletion for addresses in multiple countries using official postal data.",
     "type": "magento-module",
     "require": {
         "magento-hackathon/magento-composer-installer": "*"
     },
     "license": "BSD-2-Clause",
-    "authors": [
-        {
-            "name": "Matthias",
-            "email": "matthias@3webapps.com"
-        }
-    ],
-    "minimum-stability": "alpha"
+    "homepage": "https://www.postcode.nl/en",
+    "keywords": ["international", "address", "api", "validation", "autocomplete", "rest", "postcode", "postcodenl", "netherlands"]
 }

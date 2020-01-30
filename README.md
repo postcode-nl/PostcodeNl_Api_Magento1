@@ -1,5 +1,19 @@
-# Mage42 Postcode.nl API Magento Plugin
+Postcode.nl International Address API module for Magento 1.9
+=============
 
-### Supports the following features
-* Look up Dutch addresses by a combination of zip codes and house numbers
-* Autocomplete for Belgium and Germany
+Adds autocompletion for addresses to the checkout page. Multiple countries are supported using official postal data via the [Postcode.nl](https://postcode.nl) API.
+
+This module has been created for Postcode.nl by 3WebApps.
+
+
+Postcode.nl Account
+=============
+
+A [Postcode.nl account](https://www.postcode.nl/en/services/adresdata/producten-overzicht) is required.
+Testing is free. After testing you can choose to purchase a subscription. 
+
+
+License
+=============
+
+The code is available under the Simplified BSD License, see the included LICENSE file.

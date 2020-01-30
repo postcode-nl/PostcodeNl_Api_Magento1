@@ -2,7 +2,6 @@
 
 /**
  * Class Mage42_PostcodeNL_JsonController
- * (c) www.3webapps.com 2019
  */
 class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
 {
