@@ -13,10 +13,6 @@ class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
         $helper = Mage::helper('mage42_postcodenl');
 
         $sessionHeaderRequest = $this->getRequest()->getHeader('x-autocomplete-session');
-        if (empty($sessionHeaderRequest)) {
-            $sessionHeaderRequest = null;
-        }
-
         $this->getResponse()->setHeader('Content-type', 'application/json', true);
         $context = key($this->getRequest()->getParams());
         $term = $this->getRequest()->getParam($context);
@@ -36,10 +32,6 @@ class Mage42_PostcodeNL_JsonController extends Mage_Core_Controller_Front_Action
         $helper = Mage::helper('mage42_postcodenl');
 
         $sessionHeaderRequest = $this->getRequest()->getHeader('x-autocomplete-session');
-        if (empty($sessionHeaderRequest)) {
-            $sessionHeaderRequest = null;
-        }
-
         $this->getResponse()->setHeader('Content-type', 'application/json', true);
         $context = key($this->getRequest()->getParams());
         $response = $helper->_internationalGetDetails(
