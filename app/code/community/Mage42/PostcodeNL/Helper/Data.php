@@ -5,10 +5,11 @@
  */
 class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 {
+    /** @var string This should be updated when tagging a new version of the plugin */
+    const PLUGIN_VERSION = '1.0.1';
     const SESSION_HEADER_KEY = 'X-Autocomplete-Session';
     const API_TIMEOUT = 3;
     const ACCOUNT_URL = 'https://api.postcode.nl';
-    const API_VERSION = 'v1';
 
     protected $_curlHandler;
     protected $_mostRecentResponseHeaders = [];
@@ -39,7 +40,7 @@ class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
         curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, self::API_TIMEOUT);
         curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, self::API_TIMEOUT);
-        curl_setopt($this->_curlHandler, CURLOPT_USERAGENT, static::class . '/' . static::API_VERSION . ' PHP/' . PHP_VERSION);
+        curl_setopt($this->_curlHandler, CURLOPT_USERAGENT, static::class . '/' . static::PLUGIN_VERSION . ' PHP/' . PHP_VERSION);
 
         if (isset($_SERVER['HTTP_REFERER']))
             curl_setopt($this->_curlHandler, CURLOPT_REFERER, $_SERVER['HTTP_REFERER']);
