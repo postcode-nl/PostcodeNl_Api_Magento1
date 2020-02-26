@@ -22,7 +22,6 @@
                 </mage42_postcodenl>
             </updates>
         </layout>
-
     </frontend>
     <admin>
         <routers>

@@ -1,6 +1,6 @@
 <?php
 
-$install = $this;
+$installer = $this;
 $installer->startSetup();
 $connection = $installer->getConnection();
 
