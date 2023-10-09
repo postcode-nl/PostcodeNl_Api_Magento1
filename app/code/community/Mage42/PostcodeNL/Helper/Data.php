@@ -6,10 +6,10 @@
 class Mage42_PostcodeNL_Helper_Data extends Mage_Core_Helper_Abstract
 {
     /** @var string This should be updated when tagging a new version of the plugin */
-    const PLUGIN_VERSION = '1.0.1';
+    const PLUGIN_VERSION = '1.0.3';
     const SESSION_HEADER_KEY = 'X-Autocomplete-Session';
     const API_TIMEOUT = 3;
-    const ACCOUNT_URL = 'https://api.postcode.nl';
+    const ACCOUNT_URL = 'https://api.postcode.eu';
 
     protected $_curlHandler;
     protected $_mostRecentResponseHeaders = [];
